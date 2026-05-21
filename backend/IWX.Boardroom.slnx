@@ -2,6 +2,10 @@
   <Folder Name="/api-gateway/">
     <Project Path="api-gateway/IWX.ApiGateway/IWX.ApiGateway.csproj" />
   </Folder>
+  <Folder Name="/ai-services/" />
+  <Folder Name="/ai-services/memory-engine/">
+    <Project Path="ai-services/memory-engine/IWX.MemoryEngine.Api/IWX.MemoryEngine.Api.csproj" />
+  </Folder>
   <Folder Name="/services/" />
   <Folder Name="/services/ceo-agent-service/">
     <Project Path="services/ceo-agent-service/IWX.CeoAgent.Api/IWX.CeoAgent.Api.csproj" />

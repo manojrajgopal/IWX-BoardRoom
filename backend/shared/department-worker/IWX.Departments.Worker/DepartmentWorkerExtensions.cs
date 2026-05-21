@@ -43,7 +43,18 @@ public static class DepartmentWorkerExtensions
         }
         else
         {
-            builder.Services.AddSingleton<IDepartmentBrain>(_ => new DefaultDepartmentBrain(department));
+            // Phase 3 default: delegate to AI substrate (reasoning-engine + memory-engine).
+            // Falls back to DefaultDepartmentBrain if the substrate is unreachable.
+            var opts = new SubstrateOptions
+            {
+                ReasoningEngineUrl = builder.Configuration["Substrate:ReasoningEngineUrl"] ?? "http://reasoning-engine:8105",
+                MemoryEngineUrl = builder.Configuration["Substrate:MemoryEngineUrl"] ?? "http://memory-engine:8100"
+            };
+            builder.Services.AddSingleton(opts);
+            builder.Services.AddHttpClient<IDepartmentBrain, SubstrateDepartmentBrain>(c =>
+            {
+                c.Timeout = TimeSpan.FromMinutes(5);
+            });
         }
 
         builder.Services.AddMassTransit(x =>

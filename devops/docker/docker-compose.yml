@@ -11,6 +11,7 @@ volumes:
   rabbit-data:
   kafka-data:
   ollama-data:
+  chroma-data:
 
 services:
   sqlserver:
@@ -373,4 +374,88 @@ services:
     depends_on:
       sqlserver: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  # ---------------------------------------------------------------------------
+  # Phase 3 — AI substrate (cognition services)
+  # All department brains delegate to this stack for memory, prompts, embeddings,
+  # vector search, LLM routing, and multi-agent reasoning.
+  # ---------------------------------------------------------------------------
+
+  memory-engine:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/memory-engine/IWX.MemoryEngine.Api/Dockerfile
+    container_name: iwx-memory-engine
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017"
+      ConnectionStrings__Redis: "redis:6379"
+      Mongo__Database: "iwx_memory"
+    ports: ["8100:8100"]
+    depends_on: [mongo, redis]
+    networks: [iwx-net]
+
+  llm-router:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/llm-router/Dockerfile
+    container_name: iwx-llm-router
+    environment:
+      IWX_OLLAMA_HOST: http://ollama:11434
+      IWX_OLLAMA_DEFAULT_MODEL: llama3.2:3b
+    ports: ["8101:8101"]
+    depends_on: [ollama]
+    networks: [iwx-net]
+
+  prompt-engine:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/prompt-engine/Dockerfile
+    container_name: iwx-prompt-engine
+    environment:
+      IWX_MONGO_URI: "mongodb://iwx:iwx@mongo:27017"
+      IWX_MONGO_DB: "iwx_prompts"
+    ports: ["8102:8102"]
+    depends_on: [mongo]
+    networks: [iwx-net]
+
+  vector-engine:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/vector-engine/Dockerfile
+    container_name: iwx-vector-engine
+    environment:
+      IWX_MODEL_NAME: "sentence-transformers/all-MiniLM-L6-v2"
+      IWX_DEVICE: "cpu"
+    ports: ["8103:8103"]
+    networks: [iwx-net]
+
+  rag-engine:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/rag-engine/Dockerfile
+    container_name: iwx-rag-engine
+    environment:
+      IWX_VECTOR_ENGINE_URL: "http://vector-engine:8103"
+      IWX_CHROMA_PATH: "/data/chroma"
+    volumes: ["chroma-data:/data/chroma"]
+    ports: ["8104:8104"]
+    depends_on: [vector-engine]
+    networks: [iwx-net]
+
+  reasoning-engine:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/reasoning-engine/Dockerfile
+    container_name: iwx-reasoning-engine
+    environment:
+      IWX_LLM_ROUTER_URL: "http://llm-router:8101"
+      IWX_PROMPT_ENGINE_URL: "http://prompt-engine:8102"
+      IWX_MEMORY_ENGINE_URL: "http://memory-engine:8100"
+      IWX_RAG_ENGINE_URL: "http://rag-engine:8104"
+      IWX_DEFAULT_PROVIDER: "ollama"
+      IWX_DEFAULT_MODEL: "llama3.2:3b"
+    ports: ["8105:8105"]
+    depends_on: [llm-router, prompt-engine, memory-engine, rag-engine]
     networks: [iwx-net]
