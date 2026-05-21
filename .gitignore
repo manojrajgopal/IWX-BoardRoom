@@ -1,0 +1,50 @@
+# Node
+node_modules/
+npm-debug.log*
+dist/
+.angular/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / runtime
+*.log
+.env
+.env.local
+
+# Docker volumes (host bind only)
+docker-data/
+
+# Build outputs
+*.dll
+*.pdb
+out/
+build/
+
+# Secrets
+*.pfx
+*.key
+*.pem
+.vscode

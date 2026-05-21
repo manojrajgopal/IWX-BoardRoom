@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/api-gateway/">
+    <Project Path="api-gateway/IWX.ApiGateway/IWX.ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/services/" />
+  <Folder Name="/services/ceo-agent-service/">
+    <Project Path="services/ceo-agent-service/IWX.CeoAgent.Api/IWX.CeoAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/shared/" />
+  <Folder Name="/shared/common/">
+    <Project Path="shared/common/IWX.Common/IWX.Common.csproj" />
+  </Folder>
+  <Folder Name="/shared/contracts/">
+    <Project Path="shared/contracts/IWX.Contracts/IWX.Contracts.csproj" />
+  </Folder>
+</Solution>

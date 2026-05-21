@@ -1,0 +1,376 @@
+name: iwx-boardroom
+
+networks:
+  iwx-net:
+    driver: bridge
+
+volumes:
+  sql-data:
+  mongo-data:
+  redis-data:
+  rabbit-data:
+  kafka-data:
+  ollama-data:
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: iwx-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "IwxStrong!Passw0rd"
+      MSSQL_PID: "Developer"
+    ports: ["1433:1433"]
+    volumes: ["sql-data:/var/opt/mssql"]
+    networks: [iwx-net]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    container_name: iwx-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: iwx
+      MONGO_INITDB_ROOT_PASSWORD: iwx
+    ports: ["27017:27017"]
+    volumes: ["mongo-data:/data/db"]
+    networks: [iwx-net]
+
+  redis:
+    image: redis:7-alpine
+    container_name: iwx-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: ["redis-data:/data"]
+    networks: [iwx-net]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: iwx-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: iwx
+      RABBITMQ_DEFAULT_PASS: iwx
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes: ["rabbit-data:/var/lib/rabbitmq"]
+    networks: [iwx-net]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: iwx-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports: ["9092:9092"]
+    volumes: ["kafka-data:/bitnami/kafka"]
+    networks: [iwx-net]
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: iwx-ollama
+    ports: ["11434:11434"]
+    volumes: ["ollama-data:/root/.ollama"]
+    networks: [iwx-net]
+
+  ceo-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/ceo-agent-service/IWX.CeoAgent.Api/Dockerfile
+    container_name: iwx-ceo-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxCeo;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8081:8081"]
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [iwx-net]
+
+  orchestrator-ai:
+    build:
+      context: ../..
+      dockerfile: backend/ai-services/orchestrator-ai/Dockerfile
+    container_name: iwx-orchestrator
+    environment:
+      IWX_RABBITMQ_HOST: rabbitmq
+      IWX_RABBITMQ_USER: iwx
+      IWX_RABBITMQ_PASS: iwx
+      IWX_OLLAMA_HOST: http://ollama:11434
+      IWX_OLLAMA_MODEL: llama3.2:3b
+    ports: ["8000:8000"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [iwx-net]
+
+  api-gateway:
+    build:
+      context: ../..
+      dockerfile: backend/api-gateway/IWX.ApiGateway/Dockerfile
+    container_name: iwx-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    ports: ["8080:8080"]
+    depends_on:
+      - ceo-agent-service
+      - orchestrator-ai
+      - hr-agent-service
+      - sales-agent-service
+      - finance-agent-service
+      - marketing-agent-service
+      - operations-agent-service
+      - development-agent-service
+      - research-agent-service
+      - legal-agent-service
+      - social-media-agent-service
+      - analytics-agent-service
+      - customer-support-agent-service
+      - automation-agent-service
+      - platform-intelligence-agent-service
+    networks: [iwx-net]
+
+  # ---------------------------------------------------------------------------
+  # Phase 2 — Department agent services
+  # Each runs the IWX.Departments.Worker library bound to the iwx.task.approved
+  # fanout exchange, filtering by its own department key. Each gets its own
+  # SQL Server database. All share one RabbitMQ broker.
+  # ---------------------------------------------------------------------------
+
+  hr-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/hr-agent-service/IWX.HrAgent.Api/Dockerfile
+    container_name: iwx-hr-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxHr;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8082:8082"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  sales-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/sales-agent-service/IWX.SalesAgent.Api/Dockerfile
+    container_name: iwx-sales-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxSales;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8083:8083"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  finance-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/finance-agent-service/IWX.FinanceAgent.Api/Dockerfile
+    container_name: iwx-finance-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxFinance;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8084:8084"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  marketing-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/marketing-agent-service/IWX.MarketingAgent.Api/Dockerfile
+    container_name: iwx-marketing-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxMarketing;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8085:8085"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  operations-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/operations-agent-service/IWX.OperationsAgent.Api/Dockerfile
+    container_name: iwx-operations-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxOperations;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8086:8086"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  development-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/development-agent-service/IWX.DevelopmentAgent.Api/Dockerfile
+    container_name: iwx-development-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxDevelopment;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8087:8087"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  research-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/research-agent-service/IWX.ResearchAgent.Api/Dockerfile
+    container_name: iwx-research-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxResearch;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8088:8088"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  legal-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/legal-agent-service/IWX.LegalAgent.Api/Dockerfile
+    container_name: iwx-legal-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxLegal;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8089:8089"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  social-media-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/social-media-agent-service/IWX.SocialMediaAgent.Api/Dockerfile
+    container_name: iwx-social-media-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxSocialMedia;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8090:8090"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  analytics-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/analytics-agent-service/IWX.AnalyticsAgent.Api/Dockerfile
+    container_name: iwx-analytics-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxAnalytics;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8091:8091"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  customer-support-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/customer-support-agent-service/IWX.CustomerSupportAgent.Api/Dockerfile
+    container_name: iwx-customer-support-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxCustomerSupport;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8092:8092"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  automation-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/automation-agent-service/IWX.AutomationAgent.Api/Dockerfile
+    container_name: iwx-automation-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxAutomation;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8093:8093"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  platform-intelligence-agent-service:
+    build:
+      context: ../..
+      dockerfile: backend/services/platform-intelligence-agent-service/IWX.PlatformIntelligenceAgent.Api/Dockerfile
+    container_name: iwx-platform-intelligence-agent
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxPlatformIntelligence;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8094:8094"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]

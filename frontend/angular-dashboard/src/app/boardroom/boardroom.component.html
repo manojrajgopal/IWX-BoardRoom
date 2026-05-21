@@ -1,0 +1,86 @@
+<div class="iwx-shell">
+  <header class="iwx-header">
+    <div>
+      <h1>IWX Boardroom</h1>
+      <p class="muted">Autonomous AI Enterprise · CEO Console</p>
+    </div>
+    <div class="hub-state" [ngClass]="{ on: hub.connected() }">
+      <span class="dot"></span>
+      {{ hub.connected() ? 'Realtime online' : 'Connecting…' }}
+    </div>
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi"><span class="kpi-label">Total</span><span class="kpi-value">{{ stats().total }}</span></div>
+    <div class="kpi"><span class="kpi-label">Pending</span><span class="kpi-value">{{ stats().pending }}</span></div>
+    <div class="kpi"><span class="kpi-label">In Flight</span><span class="kpi-value">{{ stats().inFlight }}</span></div>
+    <div class="kpi"><span class="kpi-label">Done</span><span class="kpi-value">{{ stats().done }}</span></div>
+  </section>
+
+  <section class="grid">
+    <p-card header="New Boardroom Directive" class="glass">
+      <div class="form">
+        <input pInputText placeholder="Title"
+               [ngModel]="draft().title"
+               (ngModelChange)="draft.set({ ...draft(), title: $event })" />
+        <textarea pTextarea rows="4" placeholder="Describe the task"
+                  [ngModel]="draft().description"
+                  (ngModelChange)="draft.set({ ...draft(), description: $event })"></textarea>
+        <div class="row">
+          <p-select [options]="departments" optionLabel="label" optionValue="value"
+                    [ngModel]="draft().targetDepartment"
+                    (ngModelChange)="draft.set({ ...draft(), targetDepartment: $event })"
+                    placeholder="Department" />
+          <p-select [options]="priorities" optionLabel="label" optionValue="value"
+                    [ngModel]="draft().priority"
+                    (ngModelChange)="draft.set({ ...draft(), priority: $event })"
+                    placeholder="Priority" />
+        </div>
+        <p-button label="Submit for CEO Approval" icon="pi pi-send" (onClick)="submit()" />
+      </div>
+    </p-card>
+
+    <p-card header="Live AI Thinking Stream" class="glass">
+      <div class="stream">
+        @for (t of hub.thinking(); track t.timestampUtc + t.taskId + t.stage) {
+          <div class="thinking-row">
+            <span class="dept">{{ t.department }}</span>
+            <span class="stage">{{ t.stage }}</span>
+            <span class="msg">{{ t.message }}</span>
+            <span class="time">{{ t.timestampUtc | date: 'HH:mm:ss' }}</span>
+          </div>
+        } @empty {
+          <p class="muted">Waiting for AI activity…</p>
+        }
+      </div>
+    </p-card>
+  </section>
+
+  <section>
+    <p-card header="Boardroom Tasks" class="glass">
+      <p-table [value]="tasks()" [loading]="loading()" responsiveLayout="scroll" stripedRows>
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Title</th><th>Department</th><th>Priority</th><th>Status</th>
+            <th>Created</th><th>Summary</th><th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-t>
+          <tr>
+            <td>{{ t.title }}</td>
+            <td>{{ t.targetDepartment }}</td>
+            <td>{{ t.priority }}</td>
+            <td><p-tag [value]="statusLabel(t.status)" [severity]="statusSeverity(t.status)" /></td>
+            <td>{{ t.createdAtUtc | date: 'short' }}</td>
+            <td class="summary">{{ t.resultSummary || '—' }}</td>
+            <td>
+              @if (t.status === 1) {
+                <p-button size="small" label="Approve" icon="pi pi-check" (onClick)="approve(t)" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </section>
+</div>
