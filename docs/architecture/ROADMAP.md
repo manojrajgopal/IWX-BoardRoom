@@ -116,10 +116,21 @@ Four independent durable runtimes the CEO and departments use to orchestrate wor
 
 ---
 
-## Phase 6 — Security  ⬜
-- `java-security-engine` (Spring Boot) — prompt-injection detection, behavioral analysis
-- `auth-service` (.NET 10) — JWT + OAuth2 + RBAC
-- `audit-service` — append-only audit log to Mongo + Kafka
+## Phase 6 — Security  ✅ COMPLETE
+
+Three independent zero-trust security services. All other services treat them as the single source of truth for identity, threat detection, and tamper-evident audit.
+
+| Component | Stack | Path | Port | Storage | Status |
+|---|---|---|---|---|---|
+| `java-security-engine` — prompt-injection heuristics (12 patterns) + behavioral rate analyzer; publishes `iwx.security.threat.detected` | Spring Boot 3 + Java 21 + Spring AMQP | `backend/security/java-security-engine` | 8400 | stateless | ✅ |
+| `auth-service` — JWT (HS256) issuance, RBAC (`ceo`/`admin`/`director`/`agent`/`user`), PBKDF2 password hashing, bootstrap CEO seed; publishes `iwx.security.auth.issued` / `iwx.security.access.denied` | .NET 10 + EF Core + JwtBearer | `backend/security/auth-service/IWX.AuthService.Api` | 8401 | SQL `IwxAuth` | ✅ |
+| `audit-service` — append-only **hash-chained** audit log with chain verification; consumes Threat/Auth/Denied/Audit events from Rabbit, persists to Mongo, mirrors to Kafka topic `iwx.audit` | .NET 10 + MongoDB + Confluent.Kafka + MassTransit | `backend/security/audit-service/IWX.AuditService.Api` | 8402 | Mongo `iwx_audit` + Kafka | ✅ |
+| `SecurityRegistry` + `SecurityEvents` (4 event types: `ThreatDetectedEvent`, `AuthIssuedEvent`, `AccessDeniedEvent`, `AuditRecordedEvent`) | C# | `IWX.Contracts/Security/SecurityEvents.cs` | — | — | ✅ |
+| API Gateway routes `/api/security/{auth,audit,scan}/**` | YARP | `backend/api-gateway/IWX.ApiGateway/appsettings.json` | — | — | ✅ |
+| Docker Compose entries for all 3 (with proper SQL/Mongo/Kafka/RabbitMQ healthcheck-gated `depends_on`) | — | `devops/docker/docker-compose.yml` | — | — | ✅ |
+| Full solution builds (35 .NET projects + 1 Spring Boot) with 0 errors | — | — | — | — | ✅ |
+
+---
 
 ## Phase 7 — Frontend expansion  ⬜
 - `admin-panel` (Angular) — system admin

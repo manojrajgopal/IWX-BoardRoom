@@ -1,0 +1,21 @@
+server:
+  port: 8400
+
+spring:
+  application:
+    name: iwx-java-security-engine
+  rabbitmq:
+    host: ${IWX_RABBITMQ_HOST:rabbitmq}
+    port: ${IWX_RABBITMQ_PORT:5672}
+    username: ${IWX_RABBITMQ_USER:iwx}
+    password: ${IWX_RABBITMQ_PASS:iwx}
+
+iwx:
+  rabbit:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

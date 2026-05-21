@@ -694,3 +694,62 @@ services:
       sqlserver: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
     networks: [iwx-net]
+
+  # ---------------------------------------------------------------------------
+  # Phase 6 — Security services
+  # java-security-engine: Spring Boot prompt-injection / behavioral analysis
+  # auth-service:         .NET 10 JWT + RBAC user store (SQL Server)
+  # audit-service:        .NET 10 append-only audit log (Mongo + Kafka)
+  # ---------------------------------------------------------------------------
+
+  java-security-engine:
+    build:
+      context: ../..
+      dockerfile: backend/security/java-security-engine/Dockerfile
+    container_name: iwx-java-security-engine
+    environment:
+      IWX_RABBITMQ_HOST: rabbitmq
+      IWX_RABBITMQ_USER: iwx
+      IWX_RABBITMQ_PASS: iwx
+    ports: ["8400:8400"]
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  auth-service:
+    build:
+      context: ../..
+      dockerfile: backend/security/auth-service/IWX.AuthService.Api/Dockerfile
+    container_name: iwx-auth-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxAuth;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8401:8401"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  audit-service:
+    build:
+      context: ../..
+      dockerfile: backend/security/audit-service/IWX.AuditService.Api/Dockerfile
+    container_name: iwx-audit-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Mongo__ConnectionString: "mongodb://iwx:iwx@mongo:27017/?authSource=admin"
+      Mongo__Database: "iwx_audit"
+      Kafka__BootstrapServers: "kafka:9092"
+      Kafka__Topic: "iwx.audit"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8402:8402"]
+    depends_on:
+      mongo: { condition: service_started }
+      kafka: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]

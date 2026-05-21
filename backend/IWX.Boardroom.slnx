@@ -47,6 +47,13 @@
   <Folder Name="/platform-connectors/youtube-connector/">
     <Project Path="platform-connectors/youtube-connector/IWX.YouTubeConnector.Api/IWX.YouTubeConnector.Api.csproj" />
   </Folder>
+  <Folder Name="/security/" />
+  <Folder Name="/security/audit-service/">
+    <Project Path="security/audit-service/IWX.AuditService.Api/IWX.AuditService.Api.csproj" />
+  </Folder>
+  <Folder Name="/security/auth-service/">
+    <Project Path="security/auth-service/IWX.AuthService.Api/IWX.AuthService.Api.csproj" />
+  </Folder>
   <Folder Name="/services/" />
   <Folder Name="/services/analytics-agent-service/">
     <Project Path="services/analytics-agent-service/IWX.AnalyticsAgent.Api/IWX.AnalyticsAgent.Api.csproj" />
