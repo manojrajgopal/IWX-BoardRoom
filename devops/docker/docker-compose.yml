@@ -753,3 +753,39 @@ services:
       kafka: { condition: service_started }
       rabbitmq: { condition: service_healthy }
     networks: [iwx-net]
+
+  # ---------------------------------------------------------------------------
+  # Phase 7 — Frontend expansion
+  # 3 independent Angular 21 apps, each served by its own nginx container.
+  # All call the API Gateway at http://api-gateway:8080.
+  # ---------------------------------------------------------------------------
+
+  admin-panel:
+    build:
+      context: ../..
+      dockerfile: frontend/admin-panel/Dockerfile
+    container_name: iwx-admin-panel
+    ports: ["4201:4201"]
+    depends_on:
+      - api-gateway
+    networks: [iwx-net]
+
+  realtime-monitor:
+    build:
+      context: ../..
+      dockerfile: frontend/realtime-monitor/Dockerfile
+    container_name: iwx-realtime-monitor
+    ports: ["4202:4202"]
+    depends_on:
+      - api-gateway
+    networks: [iwx-net]
+
+  analytics-dashboard:
+    build:
+      context: ../..
+      dockerfile: frontend/analytics-dashboard/Dockerfile
+    container_name: iwx-analytics-dashboard
+    ports: ["4203:4203"]
+    depends_on:
+      - api-gateway
+    networks: [iwx-net]

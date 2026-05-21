@@ -132,10 +132,26 @@ Three independent zero-trust security services. All other services treat them as
 
 ---
 
-## Phase 7 — Frontend expansion  ⬜
-- `admin-panel` (Angular) — system admin
-- `realtime-monitor` (Angular) — live workflow visualizer
-- `analytics-dashboard` (Angular) — BI views
+## Phase 7 — Frontend expansion  ✅ COMPLETE
+
+Three independent Angular 21 SPAs, each served by its own nginx container, each focused on a single concern. All call the API Gateway and stay strictly separated from `angular-dashboard` (the CEO cockpit from Phase 1).
+
+| App | Purpose | Path | Port | Key features |
+|---|---|---|---|---|
+| `admin-panel` | User & RBAC management + service registry browser | `frontend/admin-panel` | 4201 | Login (JWT), user CRUD, role assignment, registry view of all 35 services |
+| `realtime-monitor` | Live event stream visualizer | `frontend/realtime-monitor` | 4202 | SignalR hub client, 11 event channels, category counters, severity-tagged stream |
+| `analytics-dashboard` | Audit log + threat scanner | `frontend/analytics-dashboard` | 4203 | Filterable audit log, SHA-256 chain verifier, manual prompt-injection scanner |
+
+Stack (identical across all 3): Angular 21 + PrimeNG (Aura preset) + Tailwind v4 + standalone components + signals + zoneless change detection. Each app has its own `package.json`, `angular.json`, Dockerfile, and `nginx.conf` — zero shared code.
+
+| Wiring | Status |
+|---|---|
+| `admin-panel` JWT-bearer HTTP interceptor (auto-attaches `Authorization`) | ✅ |
+| `realtime-monitor` subscribes to 11 SignalR channels (CEO/Automation/Approvals/Security) | ✅ |
+| `analytics-dashboard` calls `audit-service` (`/audit`, `/audit/verify`) + `java-security-engine` (`/scan/prompt`) | ✅ |
+| Docker Compose entries (3 nginx containers depending on `api-gateway`) | ✅ |
+
+---
 
 ## Phase 8 — DevOps / Production  ⬜
 - Kubernetes manifests (`devops/kubernetes`)
