@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IWX.Connectors.Worker</RootNamespace>
+    <AssemblyName>IWX.Connectors.Worker</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
+    <PackageReference Include="MassTransit" Version="8.3.4" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.4" />
+    <PackageReference Include="MongoDB.Driver" Version="3.4.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\contracts\IWX.Contracts\IWX.Contracts.csproj" />
+    <ProjectReference Include="..\..\common\IWX.Common\IWX.Common.csproj" />
+  </ItemGroup>
+</Project>

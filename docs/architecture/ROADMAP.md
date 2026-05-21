@@ -68,8 +68,36 @@ Centralised cognition stack. Every service is independent — same separation ru
 
 ---
 
-## Phase 4 — Platform connectors  ⬜
-Independent worker services per platform (Instagram, YouTube, LinkedIn, etc.). Each connector exposes a gRPC contract consumed by department services.
+## Phase 4 — Platform connectors  ✅ COMPLETE
+
+Independent worker services per platform. Each connector exposes the **same** unified gRPC contract (`ConnectorService`) plus its own REST admin surface — strict separation preserved.
+
+| Component | Stack | Path / Port | Status |
+|---|---|---|---|
+| Unified gRPC contract `ConnectorService` (Ping/Publish/Fetch/Search/Profile/Engage) | Protobuf 3 + Grpc.Tools | `IWX.Contracts/Protos/connector.proto` | ✅ |
+| `ConnectorRegistry` (9 connectors with HTTP + gRPC ports + Mongo DB + host + icon) | C# | `IWX.Contracts/Connectors/ConnectorRegistry.cs` | ✅ |
+| `ConnectorClientFactory` — any department/service builds gRPC clients by key | C# | `IWX.Contracts/Connectors/ConnectorClientFactory.cs` | ✅ |
+| Shared `IWX.Connectors.Worker` library (REST + gRPC + Mongo credential store + MassTransit outbound) | .NET 10 | `backend/shared/connector-worker/IWX.Connectors.Worker` | ✅ |
+| `StubConnectorService` default implementation (graceful "not_implemented" responses; real platforms swap in later) | C# | `IWX.Connectors.Worker/Grpc/StubConnectorService.cs` | ✅ |
+| `instagram-connector` | .NET 10 (Stub) | `backend/platform-connectors/instagram-connector` (HTTP 8200, gRPC 9200) | ✅ |
+| `youtube-connector` | .NET 10 (Stub) | `backend/platform-connectors/youtube-connector` (HTTP 8201, gRPC 9201) | ✅ |
+| `linkedin-connector` | .NET 10 (Stub) | `backend/platform-connectors/linkedin-connector` (HTTP 8202, gRPC 9202) | ✅ |
+| `twitter-connector` | .NET 10 (Stub) | `backend/platform-connectors/twitter-connector` (HTTP 8203, gRPC 9203) | ✅ |
+| `facebook-connector` | .NET 10 (Stub) | `backend/platform-connectors/facebook-connector` (HTTP 8204, gRPC 9204) | ✅ |
+| `reddit-connector` | .NET 10 (Stub) | `backend/platform-connectors/reddit-connector` (HTTP 8205, gRPC 9205) | ✅ |
+| `whatsapp-connector` | .NET 10 (Stub) | `backend/platform-connectors/whatsapp-connector` (HTTP 8206, gRPC 9206) | ✅ |
+| `email-connector` | .NET 10 (Stub) | `backend/platform-connectors/email-connector` (HTTP 8207, gRPC 9207) | ✅ |
+| `websites-connector` | .NET 10 (Stub) | `backend/platform-connectors/websites-connector` (HTTP 8208, gRPC 9208) | ✅ |
+| Generator script `scripts/generate-connector-services.sh` | bash | — | ✅ |
+| API Gateway routes `/api/connectors/{key}/**` for all 9 | YARP | `api-gateway/appsettings.json` | ✅ |
+| Docker Compose entries for all 9 (REST + gRPC ports + Mongo dep) | — | `devops/docker/docker-compose.yml` | ✅ |
+| Department services auto-receive `ConnectorClientFactory` (any dept can call any connector by key) | C# DI | `IWX.Departments.Worker/DepartmentWorkerExtensions.cs` | ✅ |
+| Phase 2 gap closed — 13 dept services + worker library now registered in slnx | — | `backend/IWX.Boardroom.slnx` | ✅ |
+| Full solution builds (29 .NET projects) with 0 errors | — | — | ✅ |
+
+**Note on stubs:** every connector ships with `StubConnectorService` returning structured `not_implemented` responses. Swapping in real Meta Graph / YouTube Data v3 / X v2 / LinkedIn / PRAW / Twilio WhatsApp / SMTP+IMAP / Playwright scraping clients is a per-connector drop-in (`app.UseIwxConnectorService<MyRealService>(…)`). The contract, plumbing, gateway routes, compose, and department wiring are already in place.
+
+---
 
 ## Phase 5 — Automation engines  ⬜
 - `workflow-engine` — durable workflow DSL (Elsa or custom)

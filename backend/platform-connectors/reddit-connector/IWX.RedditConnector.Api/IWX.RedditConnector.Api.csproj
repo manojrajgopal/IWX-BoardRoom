@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IWX.RedditConnector</RootNamespace>
+    <AssemblyName>IWX.RedditConnector.Api</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\contracts\IWX.Contracts\IWX.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\shared\common\IWX.Common\IWX.Common.csproj" />
+    <ProjectReference Include="..\..\..\shared\connector-worker\IWX.Connectors.Worker\IWX.Connectors.Worker.csproj" />
+  </ItemGroup>
+</Project>

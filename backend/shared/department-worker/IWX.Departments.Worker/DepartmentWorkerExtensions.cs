@@ -1,4 +1,5 @@
 using IWX.Common.Observability;
+using IWX.Contracts.Connectors;
 using IWX.Contracts.Departments;
 using IWX.Contracts.Events;
 using IWX.Departments.Worker.Brain;
@@ -36,6 +37,10 @@ public static class DepartmentWorkerExtensions
             o.UseSqlServer(builder.Configuration.GetConnectionString("Sql")));
 
         builder.Services.AddSingleton(department);
+
+        // Phase 4: every department can call any platform connector by key
+        // via the unified ConnectorService gRPC contract.
+        builder.Services.AddSingleton(new ConnectorClientFactory());
 
         if (configureBrain is not null)
         {

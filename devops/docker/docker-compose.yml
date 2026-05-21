@@ -459,3 +459,164 @@ services:
     ports: ["8105:8105"]
     depends_on: [llm-router, prompt-engine, memory-engine, rag-engine]
     networks: [iwx-net]
+
+  # ---------------------------------------------------------------------------
+  # Phase 4 — Platform connectors (gRPC-first workers)
+  # Each connector exposes:
+  #   - REST  on HttpPort  (/health, /connector, /credentials, swagger)
+  #   - gRPC  on GrpcPort  (unified ConnectorService contract)
+  # All run as fully isolated services with their own Mongo databases.
+  # ---------------------------------------------------------------------------
+
+  instagram-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/instagram-connector/IWX.InstagramConnector.Api/Dockerfile
+    container_name: iwx-instagram-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_instagram?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8200:8200", "9200:9200"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  youtube-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/youtube-connector/IWX.YouTubeConnector.Api/Dockerfile
+    container_name: iwx-youtube-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_youtube?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8201:8201", "9201:9201"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  linkedin-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/linkedin-connector/IWX.LinkedInConnector.Api/Dockerfile
+    container_name: iwx-linkedin-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_linkedin?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8202:8202", "9202:9202"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  twitter-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/twitter-connector/IWX.TwitterConnector.Api/Dockerfile
+    container_name: iwx-twitter-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_twitter?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8203:8203", "9203:9203"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  facebook-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/facebook-connector/IWX.FacebookConnector.Api/Dockerfile
+    container_name: iwx-facebook-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_facebook?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8204:8204", "9204:9204"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  reddit-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/reddit-connector/IWX.RedditConnector.Api/Dockerfile
+    container_name: iwx-reddit-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_reddit?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8205:8205", "9205:9205"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  whatsapp-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/whatsapp-connector/IWX.WhatsAppConnector.Api/Dockerfile
+    container_name: iwx-whatsapp-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_whatsapp?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8206:8206", "9206:9206"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  email-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/email-connector/IWX.EmailConnector.Api/Dockerfile
+    container_name: iwx-email-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_email?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8207:8207", "9207:9207"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  websites-connector:
+    build:
+      context: ../..
+      dockerfile: backend/platform-connectors/websites-connector/IWX.WebsitesConnector.Api/Dockerfile
+    container_name: iwx-websites-connector
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017/iwx_connector_websites?authSource=admin"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8208:8208", "9208:9208"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]

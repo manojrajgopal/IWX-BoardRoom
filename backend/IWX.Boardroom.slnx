@@ -6,15 +6,88 @@
   <Folder Name="/ai-services/memory-engine/">
     <Project Path="ai-services/memory-engine/IWX.MemoryEngine.Api/IWX.MemoryEngine.Api.csproj" />
   </Folder>
+  <Folder Name="/platform-connectors/" />
+  <Folder Name="/platform-connectors/email-connector/">
+    <Project Path="platform-connectors/email-connector/IWX.EmailConnector.Api/IWX.EmailConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/facebook-connector/">
+    <Project Path="platform-connectors/facebook-connector/IWX.FacebookConnector.Api/IWX.FacebookConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/instagram-connector/">
+    <Project Path="platform-connectors/instagram-connector/IWX.InstagramConnector.Api/IWX.InstagramConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/linkedin-connector/">
+    <Project Path="platform-connectors/linkedin-connector/IWX.LinkedInConnector.Api/IWX.LinkedInConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/reddit-connector/">
+    <Project Path="platform-connectors/reddit-connector/IWX.RedditConnector.Api/IWX.RedditConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/twitter-connector/">
+    <Project Path="platform-connectors/twitter-connector/IWX.TwitterConnector.Api/IWX.TwitterConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/websites-connector/">
+    <Project Path="platform-connectors/websites-connector/IWX.WebsitesConnector.Api/IWX.WebsitesConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/whatsapp-connector/">
+    <Project Path="platform-connectors/whatsapp-connector/IWX.WhatsAppConnector.Api/IWX.WhatsAppConnector.Api.csproj" />
+  </Folder>
+  <Folder Name="/platform-connectors/youtube-connector/">
+    <Project Path="platform-connectors/youtube-connector/IWX.YouTubeConnector.Api/IWX.YouTubeConnector.Api.csproj" />
+  </Folder>
   <Folder Name="/services/" />
+  <Folder Name="/services/analytics-agent-service/">
+    <Project Path="services/analytics-agent-service/IWX.AnalyticsAgent.Api/IWX.AnalyticsAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/automation-agent-service/">
+    <Project Path="services/automation-agent-service/IWX.AutomationAgent.Api/IWX.AutomationAgent.Api.csproj" />
+  </Folder>
   <Folder Name="/services/ceo-agent-service/">
     <Project Path="services/ceo-agent-service/IWX.CeoAgent.Api/IWX.CeoAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/customer-support-agent-service/">
+    <Project Path="services/customer-support-agent-service/IWX.CustomerSupportAgent.Api/IWX.CustomerSupportAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/development-agent-service/">
+    <Project Path="services/development-agent-service/IWX.DevelopmentAgent.Api/IWX.DevelopmentAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/finance-agent-service/">
+    <Project Path="services/finance-agent-service/IWX.FinanceAgent.Api/IWX.FinanceAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/hr-agent-service/">
+    <Project Path="services/hr-agent-service/IWX.HrAgent.Api/IWX.HrAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/legal-agent-service/">
+    <Project Path="services/legal-agent-service/IWX.LegalAgent.Api/IWX.LegalAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/marketing-agent-service/">
+    <Project Path="services/marketing-agent-service/IWX.MarketingAgent.Api/IWX.MarketingAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/operations-agent-service/">
+    <Project Path="services/operations-agent-service/IWX.OperationsAgent.Api/IWX.OperationsAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/platform-intelligence-agent-service/">
+    <Project Path="services/platform-intelligence-agent-service/IWX.PlatformIntelligenceAgent.Api/IWX.PlatformIntelligenceAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/research-agent-service/">
+    <Project Path="services/research-agent-service/IWX.ResearchAgent.Api/IWX.ResearchAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/sales-agent-service/">
+    <Project Path="services/sales-agent-service/IWX.SalesAgent.Api/IWX.SalesAgent.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/social-media-agent-service/">
+    <Project Path="services/social-media-agent-service/IWX.SocialMediaAgent.Api/IWX.SocialMediaAgent.Api.csproj" />
   </Folder>
   <Folder Name="/shared/" />
   <Folder Name="/shared/common/">
     <Project Path="shared/common/IWX.Common/IWX.Common.csproj" />
   </Folder>
+  <Folder Name="/shared/connector-worker/">
+    <Project Path="shared/connector-worker/IWX.Connectors.Worker/IWX.Connectors.Worker.csproj" />
+  </Folder>
   <Folder Name="/shared/contracts/">
     <Project Path="shared/contracts/IWX.Contracts/IWX.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/shared/department-worker/">
+    <Project Path="shared/department-worker/IWX.Departments.Worker/IWX.Departments.Worker.csproj" />
   </Folder>
 </Solution>

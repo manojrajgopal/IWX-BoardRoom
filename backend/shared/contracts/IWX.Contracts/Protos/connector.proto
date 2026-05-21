@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+option csharp_namespace = "IWX.Contracts.Connectors.Grpc";
+
+package iwx.connectors.v1;
+
+// =====================================================================
+// Unified ConnectorService contract.
+// Every platform connector (instagram, youtube, twitter, …) implements
+// this same gRPC service. Department services consume it generically
+// via ConnectorClientFactory(key).
+// =====================================================================
+service ConnectorService {
+  // Liveness + capability discovery.
+  rpc Ping (PingRequest) returns (PingResponse);
+
+  // Publish content (post, video, tweet, comment, message).
+  rpc Publish (PublishRequest) returns (PublishResponse);
+
+  // Fetch recent items from the connected account/channel.
+  rpc Fetch (FetchRequest) returns (FetchResponse);
+
+  // Run a platform-native search.
+  rpc Search (SearchRequest) returns (SearchResponse);
+
+  // Get a profile / channel / page snapshot.
+  rpc Profile (ProfileRequest) returns (ProfileResponse);
+
+  // Engage with an item (like, share, comment, reply, react).
+  rpc Engage (EngageRequest) returns (EngageResponse);
+}
+
+// ---------- common ----------
+message KeyValue {
+  string key = 1;
+  string value = 2;
+}
+
+message Media {
+  string url = 1;
+  string mime_type = 2;
+  string caption = 3;
+}
+
+message Item {
+  string id = 1;
+  string author = 2;
+  string text = 3;
+  string url = 4;
+  string created_at_iso = 5;
+  repeated Media media = 6;
+  repeated KeyValue metadata = 7;
+}
+
+// ---------- ping ----------
+message PingRequest {}
+message PingResponse {
+  string connector = 1;
+  string version = 2;
+  repeated string capabilities = 3;
+  bool credentials_configured = 4;
+}
+
+// ---------- publish ----------
+message PublishRequest {
+  string account = 1;                // optional, for multi-account connectors
+  string title = 2;
+  string body = 3;
+  repeated Media media = 4;
+  repeated KeyValue metadata = 5;
+}
+message PublishResponse {
+  bool success = 1;
+  string item_id = 2;
+  string url = 3;
+  string error = 4;
+}
+
+// ---------- fetch ----------
+message FetchRequest {
+  string account = 1;
+  int32 limit = 2;
+  string cursor = 3;
+}
+message FetchResponse {
+  repeated Item items = 1;
+  string next_cursor = 2;
+}
+
+// ---------- search ----------
+message SearchRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+message SearchResponse {
+  repeated Item items = 1;
+}
+
+// ---------- profile ----------
+message ProfileRequest {
+  string handle = 1;
+}
+message ProfileResponse {
+  string id = 1;
+  string handle = 2;
+  string display_name = 3;
+  string description = 4;
+  int64 followers = 5;
+  int64 following = 6;
+  string avatar_url = 7;
+  repeated KeyValue metadata = 8;
+}
+
+// ---------- engage ----------
+message EngageRequest {
+  string item_id = 1;
+  string action = 2;     // "like" | "share" | "comment" | "reply" | "react"
+  string body = 3;       // for comment/reply text
+  repeated KeyValue metadata = 4;
+}
+message EngageResponse {
+  bool success = 1;
+  string result_id = 2;
+  string error = 3;
+}
