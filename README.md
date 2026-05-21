@@ -38,24 +38,28 @@ devops/
 docs/
 ```
 
-## Quick start (Phase 1 — full stack via Docker)
+## Quick start (one command)
 
-Prereqs: Docker Desktop, Node 20+, .NET 10 SDK, Python 3.12.
+Prereqs: Docker Desktop. Optional for dev: Node 20+, .NET 10 SDK, Python 3.12.
 
 ```bash
-# 1. Bring up infrastructure + backend + AI services
-cd devops/docker
-docker compose up -d --build
+# 1. Copy environment template and fill in API keys (or accept defaults for local dev)
+cp .env.example .env
 
-# 2. Pull a local LLM (one-time)
-docker exec -it iwx-ollama ollama pull llama3.2:3b
+# 2. Boot the entire platform (builds images, starts infra + 35 backend services + 4 frontends)
+./start.sh                  # macOS / Linux / Git Bash
+# or
+./start.ps1                 # Windows PowerShell
+# or
+make up                     # any platform with make
 
-# 3. Start the Angular dashboard
-cd ../../frontend/angular-dashboard
-npm install
-npm start
-# → http://localhost:4200
+# 3. Pull the local LLM (first run only)
+./start.sh pull-llm
 ```
+
+Other commands: `./start.sh stop`, `./start.sh down`, `./start.sh logs <service>`, `./start.sh infra` (only datastores).
+
+See [docs/architecture/IMPLEMENTATION-ROADMAP.md](docs/architecture/IMPLEMENTATION-ROADMAP.md) for the next-cycle phases (A–N) that fill in the placeholder folders, observability, tests, and production hardening — request them one at a time with **"Continue Phase A"**, **"Continue Phase B"**, etc.
 
 Service URLs:
 
