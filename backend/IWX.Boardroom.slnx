@@ -6,6 +6,19 @@
   <Folder Name="/ai-services/memory-engine/">
     <Project Path="ai-services/memory-engine/IWX.MemoryEngine.Api/IWX.MemoryEngine.Api.csproj" />
   </Folder>
+  <Folder Name="/automation-engines/" />
+  <Folder Name="/automation-engines/approval-engine/">
+    <Project Path="automation-engines/approval-engine/IWX.ApprovalEngine.Api/IWX.ApprovalEngine.Api.csproj" />
+  </Folder>
+  <Folder Name="/automation-engines/scheduler-engine/">
+    <Project Path="automation-engines/scheduler-engine/IWX.SchedulerEngine.Api/IWX.SchedulerEngine.Api.csproj" />
+  </Folder>
+  <Folder Name="/automation-engines/task-engine/">
+    <Project Path="automation-engines/task-engine/IWX.TaskEngine.Api/IWX.TaskEngine.Api.csproj" />
+  </Folder>
+  <Folder Name="/automation-engines/workflow-engine/">
+    <Project Path="automation-engines/workflow-engine/IWX.WorkflowEngine.Api/IWX.WorkflowEngine.Api.csproj" />
+  </Folder>
   <Folder Name="/platform-connectors/" />
   <Folder Name="/platform-connectors/email-connector/">
     <Project Path="platform-connectors/email-connector/IWX.EmailConnector.Api/IWX.EmailConnector.Api.csproj" />

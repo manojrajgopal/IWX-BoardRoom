@@ -620,3 +620,77 @@ services:
       mongo: { condition: service_started }
       rabbitmq: { condition: service_healthy }
     networks: [iwx-net]
+
+  # ---------------------------------------------------------------------------
+  # Phase 5 — Automation engines
+  # Independent durable runtimes the CEO and departments use to orchestrate
+  # multi-step work, scheduled jobs, task DAGs, and human approval gates.
+  # ---------------------------------------------------------------------------
+
+  workflow-engine:
+    build:
+      context: ../..
+      dockerfile: backend/automation-engines/workflow-engine/IWX.WorkflowEngine.Api/Dockerfile
+    container_name: iwx-workflow-engine
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8300:8300"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  scheduler-engine:
+    build:
+      context: ../..
+      dockerfile: backend/automation-engines/scheduler-engine/IWX.SchedulerEngine.Api/Dockerfile
+    container_name: iwx-scheduler-engine
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxScheduler;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8301:8301"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  task-engine:
+    build:
+      context: ../..
+      dockerfile: backend/automation-engines/task-engine/IWX.TaskEngine.Api/Dockerfile
+    container_name: iwx-task-engine
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Mongo: "mongodb://iwx:iwx@mongo:27017"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8302:8302"]
+    depends_on:
+      mongo: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]
+
+  approval-engine:
+    build:
+      context: ../..
+      dockerfile: backend/automation-engines/approval-engine/IWX.ApprovalEngine.Api/Dockerfile
+    container_name: iwx-approval-engine
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxApprovals;User Id=sa;Password=IwxStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__User: iwx
+      RabbitMq__Pass: iwx
+    ports: ["8303:8303"]
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks: [iwx-net]

@@ -99,11 +99,22 @@ Independent worker services per platform. Each connector exposes the **same** un
 
 ---
 
-## Phase 5 — Automation engines  ⬜
-- `workflow-engine` — durable workflow DSL (Elsa or custom)
-- `scheduler-engine` — Quartz.NET
-- `task-engine` — task graph executor
-- `approval-engine` — CEO approval gate
+## Phase 5 — Automation engines  ✅ COMPLETE
+
+Four independent durable runtimes the CEO and departments use to orchestrate work — strict separation preserved.
+
+| Engine | Stack | Path | Port | DB | Status |
+|---|---|---|---|---|---|
+| `workflow-engine` — JSON DAG durable workflow runtime; auto-dispatches steps as deps complete; signal-driven progress | .NET 10 + MongoDB + MassTransit | `backend/automation-engines/workflow-engine/IWX.WorkflowEngine.Api` | 8300 | Mongo `iwx_workflows` | ✅ |
+| `scheduler-engine` — Quartz.NET cron scheduler with persistent EF Core definitions; reloads jobs on startup | .NET 10 + Quartz 3.13 + SQL Server | `backend/automation-engines/scheduler-engine/IWX.SchedulerEngine.Api` | 8301 | SQL `IwxScheduler` | ✅ |
+| `task-engine` — task graph DAG executor; tracks node status and emits `iwx.task.node.ready` events | .NET 10 + MongoDB + MassTransit | `backend/automation-engines/task-engine/IWX.TaskEngine.Api` | 8302 | Mongo `iwx_tasks` | ✅ |
+| `approval-engine` — CEO approval gate (queue + decide endpoints); publishes `iwx.approval.requested` / `iwx.approval.decided` | .NET 10 + EF Core + SQL Server | `backend/automation-engines/approval-engine/IWX.ApprovalEngine.Api` | 8303 | SQL `IwxApprovals` | ✅ |
+| `EngineRegistry` + `AutomationEvents` (5 event types: workflow step / scheduler tick / task node / approval requested / approval decided) | C# | `IWX.Contracts/Automation/AutomationEvents.cs` | — | — | ✅ |
+| API Gateway routes `/api/engines/{workflow,scheduler,task,approval}/**` | YARP | `backend/api-gateway/IWX.ApiGateway/appsettings.json` | — | — | ✅ |
+| Docker Compose entries for all 4 (with proper SQL/Mongo + RabbitMQ depends_on healthchecks) | — | `devops/docker/docker-compose.yml` | — | — | ✅ |
+| Full solution builds (33 .NET projects) with 0 errors | — | — | — | — | ✅ |
+
+---
 
 ## Phase 6 — Security  ⬜
 - `java-security-engine` (Spring Boot) — prompt-injection detection, behavioral analysis
