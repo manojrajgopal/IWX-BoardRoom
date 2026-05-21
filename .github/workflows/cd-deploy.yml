@@ -1,0 +1,60 @@
+name: CD — Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+      image_tag:
+        description: Image tag to deploy
+        required: true
+        default: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: 'v3.16.2' }
+      - uses: azure/setup-kubectl@v4
+        with: { version: 'v1.31.0' }
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Apply base manifests (namespace, secrets, infra, ingress)
+        run: |
+          kubectl apply -f devops/kubernetes/base/
+          kubectl apply -f devops/kubernetes/ingress/ || true
+
+      - name: Helm dependency update
+        working-directory: devops/helm/iwx-platform
+        run: helm dependency update
+
+      - name: Helm upgrade --install
+        working-directory: devops/helm/iwx-platform
+        run: |
+          helm upgrade --install iwx-platform . \
+            --namespace iwx \
+            --create-namespace \
+            -f values.yaml \
+            -f values-${{ inputs.environment == 'production' && 'prod' || 'staging' }}.yaml \
+            --set global.imageTag=${{ inputs.image_tag }} \
+            --wait --timeout 15m
+
+      - name: Smoke test gateway
+        run: |
+          kubectl -n iwx rollout status deploy/api-gateway --timeout=5m
+          kubectl -n iwx get pods

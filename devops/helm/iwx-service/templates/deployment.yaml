@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "iwx-service.fullname" . }}
+  labels: {{- include "iwx-service.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "iwx-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "iwx-service.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "iwx-service.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - containerPort: {{ .Values.port }}
+              name: http
+            {{- range .Values.extraPorts }}
+            - containerPort: {{ .port }}
+              name: {{ .name }}
+            {{- end }}
+          {{- with .Values.envFromConfigMaps }}
+          envFrom:
+            {{- range . }}
+            - configMapRef: { name: {{ .configMap }} }
+            {{- end }}
+          {{- end }}
+          env:
+            {{- range $k, $v := .Values.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+            {{- range .Values.envFromSecrets }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secret }}
+                  key: {{ .key }}
+            {{- end }}
+          {{- if .Values.healthPath }}
+          readinessProbe:
+            httpGet: { path: {{ .Values.healthPath }}, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: {{ .Values.healthPath }}, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          {{- end }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}

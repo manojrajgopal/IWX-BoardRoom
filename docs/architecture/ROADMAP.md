@@ -153,11 +153,21 @@ Stack (identical across all 3): Angular 21 + PrimeNG (Aura preset) + Tailwind v4
 
 ---
 
-## Phase 8 — DevOps / Production  ⬜
-- Kubernetes manifests (`devops/kubernetes`)
-- Helm charts per service
-- GitHub Actions CI/CD pipelines
-- NGINX / Traefik ingress with mTLS
+## Phase 8 — DevOps / Production  ✅ COMPLETE
+
+| Deliverable | Status |
+|---|---|
+| Kubernetes base manifests in `devops/kubernetes/base/` (namespace + quota + NetworkPolicies, shared Secrets + ConfigMap, stateful infra: SQL Server, Mongo, Redis, RabbitMQ, Kafka KRaft, Ollama) | ✅ |
+| Generic reusable Helm chart `devops/helm/iwx-service/` (Deployment + Service + HPA + Traefik IngressRoute/TLSOption/Middleware for mTLS) | ✅ |
+| Umbrella chart `devops/helm/iwx-platform/` wiring **39 service aliases** (1 gateway + 14 dept agents + 7 AI engines + 9 connectors + 4 automation + 3 security + 4 frontends) via the generic sub-chart | ✅ |
+| Per-environment overrides: `values.yaml`, `values-staging.yaml`, `values-prod.yaml` (prod enforces mTLS + scales api-gateway/auth/audit) | ✅ |
+| Traefik IngressRoute + cert-manager `ClusterIssuer`s (Let's Encrypt + self-signed root) + IWX private client-CA `Certificate` for mTLS in `devops/kubernetes/ingress/` | ✅ |
+| Edge NGINX alternative (`devops/nginx/nginx.conf` + `Dockerfile`) — TLS 1.3, `ssl_verify_client on`, forwards `X-Client-Cert`/`X-Client-DN`, SignalR upgrade block | ✅ |
+| `.github/workflows/ci-backend-dotnet.yml` — build+test the full slnx, then matrix-build & push **37 .NET images** to GHCR with GHA build cache | ✅ |
+| `.github/workflows/ci-java.yml` — Maven verify + Docker push for `java-security-engine` | ✅ |
+| `.github/workflows/ci-python.yml` — ruff lint + Docker push for `orchestrator-ai` | ✅ |
+| `.github/workflows/ci-frontend-angular.yml` — matrix build + Docker push for all **4 Angular apps** | ✅ |
+| `.github/workflows/cd-deploy.yml` — `workflow_dispatch` deploy (staging/production) via `kubectl apply` of base/ingress + `helm upgrade --install` with environment-specific values | ✅ |
 
 ---
 

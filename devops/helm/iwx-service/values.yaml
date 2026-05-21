@@ -1,0 +1,75 @@
+# Default values for iwx-service.
+# Each backend or frontend service overrides via values-<service>.yaml.
+
+# Logical name of the service (matches Kubernetes Service name)
+nameOverride: ""
+
+image:
+  repository: ghcr.io/infinitewavex/iwx-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# Container port the app listens on (mapped 1:1 to Service port by default)
+port: 8080
+# Optional second port (e.g. SignalR hub on different listener — usually same)
+extraPorts: []
+
+resources:
+  requests: { cpu: 100m, memory: 256Mi }
+  limits:   { cpu: 1,    memory: 1Gi }
+
+env: {}
+# Example:
+#   ASPNETCORE_ENVIRONMENT: Production
+#   RabbitMq__Host: rabbitmq
+
+envFromSecrets: []
+# - name: SQL_SA_PASSWORD
+#   secret: iwx-shared-secrets
+#   key: SQL_SA_PASSWORD
+
+envFromConfigMaps: []
+# - configMap: iwx-shared-config
+
+# Optional /health endpoint path
+healthPath: /health
+
+# Optional HPA
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+service:
+  type: ClusterIP
+  # port defaults to .Values.port
+
+# Optional Traefik IngressRoute path under the gateway domain
+ingress:
+  enabled: false
+  host: iwx.local
+  pathPrefix: "/api/example"
+  tls:
+    enabled: false
+    secretName: iwx-tls
+  mtls:
+    enabled: false
+    clientCASecret: iwx-client-ca
+
+# Pod security
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities: { drop: ["ALL"] }
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

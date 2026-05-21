@@ -1,0 +1,100 @@
+# IWX Boardroom — umbrella values
+# Each alias here corresponds to a sub-chart in Chart.yaml.
+# Override image.tag per-environment via -f values-staging.yaml etc.
+#
+# Standard env wiring:
+#   RabbitMq__Host: rabbitmq
+#   ConnectionStrings__Sql: Server=sqlserver,1433;Database=IwxXxx;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=False
+#   Mongo__ConnectionString: mongodb://$(MONGO_USER):$(MONGO_PASS)@mongo:27017/?authSource=admin
+
+global:
+  registry: ghcr.io/infinitewavex
+  imageTag: latest
+  domain: iwx.local
+
+# ---------------- API Gateway ----------------
+api-gateway:
+  enabled: true
+  image: { repository: ghcr.io/infinitewavex/api-gateway, tag: latest }
+  port: 8080
+  envFromConfigMaps: [{ configMap: iwx-shared-config }]
+  ingress:
+    enabled: true
+    host: iwx.local
+    pathPrefix: /
+    tls:   { enabled: true, secretName: iwx-tls }
+    mtls:  { enabled: false, clientCASecret: iwx-client-ca }
+
+# ---------------- CEO + 13 departments ----------------
+ceo-agent-service:
+  enabled: true
+  image: { repository: ghcr.io/infinitewavex/ceo-agent-service, tag: latest }
+  port: 8081
+  envFromSecrets:
+    - { name: SQL_SA_PASSWORD, secret: iwx-shared-secrets, key: SQL_SA_PASSWORD }
+  env:
+    ASPNETCORE_ENVIRONMENT: Production
+    ConnectionStrings__Sql: "Server=sqlserver,1433;Database=IwxCeo;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=False"
+    RabbitMq__Host: rabbitmq
+
+hr-agent-service:                  { enabled: true, image: { repository: ghcr.io/infinitewavex/hr-agent-service, tag: latest },                  port: 8082, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+sales-agent-service:               { enabled: true, image: { repository: ghcr.io/infinitewavex/sales-agent-service, tag: latest },               port: 8083, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+finance-agent-service:             { enabled: true, image: { repository: ghcr.io/infinitewavex/finance-agent-service, tag: latest },             port: 8084, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+marketing-agent-service:           { enabled: true, image: { repository: ghcr.io/infinitewavex/marketing-agent-service, tag: latest },           port: 8085, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+operations-agent-service:          { enabled: true, image: { repository: ghcr.io/infinitewavex/operations-agent-service, tag: latest },          port: 8086, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+development-agent-service:         { enabled: true, image: { repository: ghcr.io/infinitewavex/development-agent-service, tag: latest },         port: 8087, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+research-agent-service:            { enabled: true, image: { repository: ghcr.io/infinitewavex/research-agent-service, tag: latest },            port: 8088, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+legal-agent-service:               { enabled: true, image: { repository: ghcr.io/infinitewavex/legal-agent-service, tag: latest },               port: 8089, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+social-media-agent-service:        { enabled: true, image: { repository: ghcr.io/infinitewavex/social-media-agent-service, tag: latest },        port: 8090, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+analytics-agent-service:           { enabled: true, image: { repository: ghcr.io/infinitewavex/analytics-agent-service, tag: latest },           port: 8091, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+customer-support-agent-service:    { enabled: true, image: { repository: ghcr.io/infinitewavex/customer-support-agent-service, tag: latest },    port: 8092, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+automation-agent-service:          { enabled: true, image: { repository: ghcr.io/infinitewavex/automation-agent-service, tag: latest },          port: 8093, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+platform-intelligence-agent-service: { enabled: true, image: { repository: ghcr.io/infinitewavex/platform-intelligence-agent-service, tag: latest }, port: 8094, env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq } }
+
+# ---------------- AI engines (Phase 3) ----------------
+orchestrator-ai:   { enabled: true, image: { repository: ghcr.io/infinitewavex/orchestrator-ai,    tag: latest }, port: 8000, env: { IWX_RABBITMQ_HOST: rabbitmq, IWX_OLLAMA_HOST: "http://ollama:11434", IWX_OLLAMA_MODEL: "llama3.2:3b" } }
+memory-engine:     { enabled: true, image: { repository: ghcr.io/infinitewavex/memory-engine,      tag: latest }, port: 8100 }
+llm-router:        { enabled: true, image: { repository: ghcr.io/infinitewavex/llm-router,         tag: latest }, port: 8101 }
+prompt-engine:     { enabled: true, image: { repository: ghcr.io/infinitewavex/prompt-engine,      tag: latest }, port: 8102 }
+vector-engine:     { enabled: true, image: { repository: ghcr.io/infinitewavex/vector-engine,      tag: latest }, port: 8103 }
+rag-engine:        { enabled: true, image: { repository: ghcr.io/infinitewavex/rag-engine,         tag: latest }, port: 8104 }
+reasoning-engine:  { enabled: true, image: { repository: ghcr.io/infinitewavex/reasoning-engine,   tag: latest }, port: 8105 }
+
+# ---------------- Connectors (Phase 4) ----------------
+instagram-connector: { enabled: true, image: { repository: ghcr.io/infinitewavex/instagram-connector, tag: latest }, port: 8200 }
+youtube-connector:   { enabled: true, image: { repository: ghcr.io/infinitewavex/youtube-connector,   tag: latest }, port: 8201 }
+linkedin-connector:  { enabled: true, image: { repository: ghcr.io/infinitewavex/linkedin-connector,  tag: latest }, port: 8202 }
+twitter-connector:   { enabled: true, image: { repository: ghcr.io/infinitewavex/twitter-connector,   tag: latest }, port: 8203 }
+facebook-connector:  { enabled: true, image: { repository: ghcr.io/infinitewavex/facebook-connector,  tag: latest }, port: 8204 }
+reddit-connector:    { enabled: true, image: { repository: ghcr.io/infinitewavex/reddit-connector,    tag: latest }, port: 8205 }
+whatsapp-connector:  { enabled: true, image: { repository: ghcr.io/infinitewavex/whatsapp-connector,  tag: latest }, port: 8206 }
+email-connector:     { enabled: true, image: { repository: ghcr.io/infinitewavex/email-connector,     tag: latest }, port: 8207 }
+websites-connector:  { enabled: true, image: { repository: ghcr.io/infinitewavex/websites-connector,  tag: latest }, port: 8208 }
+
+# ---------------- Automation engines (Phase 5) ----------------
+workflow-engine:  { enabled: true, image: { repository: ghcr.io/infinitewavex/workflow-engine,  tag: latest }, port: 8300 }
+scheduler-engine: { enabled: true, image: { repository: ghcr.io/infinitewavex/scheduler-engine, tag: latest }, port: 8301 }
+task-engine:      { enabled: true, image: { repository: ghcr.io/infinitewavex/task-engine,      tag: latest }, port: 8302 }
+approval-engine:  { enabled: true, image: { repository: ghcr.io/infinitewavex/approval-engine,  tag: latest }, port: 8303 }
+
+# ---------------- Security (Phase 6) ----------------
+java-security-engine: { enabled: true, image: { repository: ghcr.io/infinitewavex/java-security-engine, tag: latest }, port: 8400, env: { IWX_RABBITMQ_HOST: rabbitmq } }
+auth-service:
+  enabled: true
+  image: { repository: ghcr.io/infinitewavex/auth-service, tag: latest }
+  port: 8401
+  env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq }
+  envFromSecrets:
+    - { name: SQL_SA_PASSWORD, secret: iwx-shared-secrets, key: SQL_SA_PASSWORD }
+    - { name: Jwt__Secret,     secret: iwx-shared-secrets, key: JWT_SECRET }
+audit-service:
+  enabled: true
+  image: { repository: ghcr.io/infinitewavex/audit-service, tag: latest }
+  port: 8402
+  env: { ASPNETCORE_ENVIRONMENT: Production, RabbitMq__Host: rabbitmq, Mongo__ConnectionString: "mongodb://iwx:iwx@mongo:27017/?authSource=admin", Mongo__Database: "iwx_audit", Kafka__BootstrapServers: "kafka:9092", Kafka__Topic: "iwx.audit" }
+
+# ---------------- Frontends (Phase 1 + 7) ----------------
+angular-dashboard:   { enabled: true, image: { repository: ghcr.io/infinitewavex/angular-dashboard,   tag: latest }, port: 80,   healthPath: "/" }
+admin-panel:         { enabled: true, image: { repository: ghcr.io/infinitewavex/admin-panel,         tag: latest }, port: 4201, healthPath: "/" }
+realtime-monitor:    { enabled: true, image: { repository: ghcr.io/infinitewavex/realtime-monitor,    tag: latest }, port: 4202, healthPath: "/" }
+analytics-dashboard: { enabled: true, image: { repository: ghcr.io/infinitewavex/analytics-dashboard, tag: latest }, port: 4203, healthPath: "/" }

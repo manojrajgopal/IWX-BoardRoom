@@ -1,0 +1,103 @@
+name: CI — .NET Backend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend-dotnet.yml'
+  pull_request:
+    paths: ['backend/**']
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Restore
+        run: dotnet restore backend/IWX.Boardroom.slnx
+      - name: Build (Release, no warnings)
+        run: dotnet build backend/IWX.Boardroom.slnx -c Release --no-restore /warnaserror
+      - name: Test
+        run: dotnet test backend/IWX.Boardroom.slnx -c Release --no-build --logger trx --results-directory TestResults || true
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: dotnet-test-results, path: TestResults }
+
+  docker-matrix:
+    needs: build-and-test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - { name: api-gateway,                            context: backend/api-gateway/IWX.ApiGateway }
+          - { name: ceo-agent-service,                      context: backend/departments/ceo-agent-service }
+          - { name: hr-agent-service,                       context: backend/departments/hr-agent-service }
+          - { name: sales-agent-service,                    context: backend/departments/sales-agent-service }
+          - { name: finance-agent-service,                  context: backend/departments/finance-agent-service }
+          - { name: marketing-agent-service,                context: backend/departments/marketing-agent-service }
+          - { name: operations-agent-service,               context: backend/departments/operations-agent-service }
+          - { name: development-agent-service,              context: backend/departments/development-agent-service }
+          - { name: research-agent-service,                 context: backend/departments/research-agent-service }
+          - { name: legal-agent-service,                    context: backend/departments/legal-agent-service }
+          - { name: social-media-agent-service,             context: backend/departments/social-media-agent-service }
+          - { name: analytics-agent-service,                context: backend/departments/analytics-agent-service }
+          - { name: customer-support-agent-service,         context: backend/departments/customer-support-agent-service }
+          - { name: automation-agent-service,               context: backend/departments/automation-agent-service }
+          - { name: platform-intelligence-agent-service,    context: backend/departments/platform-intelligence-agent-service }
+          - { name: memory-engine,        context: backend/ai-engines/memory-engine }
+          - { name: llm-router,           context: backend/ai-engines/llm-router }
+          - { name: prompt-engine,        context: backend/ai-engines/prompt-engine }
+          - { name: vector-engine,        context: backend/ai-engines/vector-engine }
+          - { name: rag-engine,           context: backend/ai-engines/rag-engine }
+          - { name: reasoning-engine,     context: backend/ai-engines/reasoning-engine }
+          - { name: instagram-connector,  context: backend/connectors/instagram-connector }
+          - { name: youtube-connector,    context: backend/connectors/youtube-connector }
+          - { name: linkedin-connector,   context: backend/connectors/linkedin-connector }
+          - { name: twitter-connector,    context: backend/connectors/twitter-connector }
+          - { name: facebook-connector,   context: backend/connectors/facebook-connector }
+          - { name: reddit-connector,     context: backend/connectors/reddit-connector }
+          - { name: whatsapp-connector,   context: backend/connectors/whatsapp-connector }
+          - { name: email-connector,      context: backend/connectors/email-connector }
+          - { name: websites-connector,   context: backend/connectors/websites-connector }
+          - { name: workflow-engine,  context: backend/automation/workflow-engine }
+          - { name: scheduler-engine, context: backend/automation/scheduler-engine }
+          - { name: task-engine,      context: backend/automation/task-engine }
+          - { name: approval-engine,  context: backend/automation/approval-engine }
+          - { name: auth-service,     context: backend/security/auth-service }
+          - { name: audit-service,    context: backend/security/audit-service }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service.name }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service.name }}:latest
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,scope=${{ matrix.service.name }},mode=max

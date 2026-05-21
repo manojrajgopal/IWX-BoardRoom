@@ -1,0 +1,22 @@
+# Production overrides — strict mTLS, conservative scaling
+global:
+  imageTag: production
+  domain: iwx.example.com
+
+api-gateway:
+  replicaCount: 3
+  resources:
+    requests: { cpu: "500m", memory: "512Mi" }
+    limits:   { cpu: "2",    memory: "2Gi" }
+  ingress:
+    host: iwx.example.com
+    tls:  { enabled: true, secretName: iwx-tls-prod }
+    mtls: { enabled: true, clientCASecret: iwx-client-ca-prod }
+
+# All security services scaled out for prod
+auth-service:    { replicaCount: 3 }
+audit-service:   { replicaCount: 2 }
+java-security-engine: { replicaCount: 2 }
+
+# CEO service is single-leader; do not scale beyond 1 without coordinator
+ceo-agent-service: { replicaCount: 1 }

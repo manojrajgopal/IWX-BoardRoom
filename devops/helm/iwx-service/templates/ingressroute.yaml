@@ -1,0 +1,49 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "iwx-service.fullname" . }}
+  labels: {{- include "iwx-service.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ if .Values.ingress.tls.enabled }}websecure{{ else }}web{{ end }}
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`{{ .Values.ingress.pathPrefix }}`)
+      kind: Rule
+      services:
+        - name: {{ include "iwx-service.fullname" . }}
+          port: {{ .Values.port }}
+      {{- if .Values.ingress.mtls.enabled }}
+      middlewares:
+        - name: {{ include "iwx-service.fullname" . }}-mtls
+      {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    secretName: {{ .Values.ingress.tls.secretName }}
+    {{- if .Values.ingress.mtls.enabled }}
+    options:
+      name: {{ include "iwx-service.fullname" . }}-tlsoptions
+    {{- end }}
+  {{- end }}
+{{- if .Values.ingress.mtls.enabled }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: {{ include "iwx-service.fullname" . }}-tlsoptions
+spec:
+  minVersion: VersionTLS13
+  clientAuth:
+    secretNames:
+      - {{ .Values.ingress.mtls.clientCASecret }}
+    clientAuthType: RequireAndVerifyClientCert
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "iwx-service.fullname" . }}-mtls
+spec:
+  passTLSClientCert:
+    pem: true
+{{- end }}
+{{- end }}

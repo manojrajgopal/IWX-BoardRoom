@@ -1,0 +1,50 @@
+# cert-manager ClusterIssuers (Let's Encrypt + private CA for mTLS).
+# Requires cert-manager already installed in the cluster.
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata: { name: letsencrypt-prod }
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ops@infinitewavex.io
+    privateKeySecretRef: { name: letsencrypt-prod-account }
+    solvers:
+      - http01: { ingress: { class: traefik } }
+---
+# Self-signed root used to mint the IWX private client CA (for mTLS)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata: { name: iwx-selfsigned-root }
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: iwx-client-ca
+  namespace: iwx
+spec:
+  isCA: true
+  commonName: IWX Client Root CA
+  secretName: iwx-client-ca
+  duration: 87600h   # 10 years
+  privateKey: { algorithm: ECDSA, size: 256 }
+  issuerRef: { name: iwx-selfsigned-root, kind: ClusterIssuer }
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata: { name: iwx-client-issuer, namespace: iwx }
+spec:
+  ca: { secretName: iwx-client-ca }
+---
+# Server cert for the gateway (Let's Encrypt issued)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: iwx-tls
+  namespace: iwx
+spec:
+  secretName: iwx-tls
+  dnsNames: [iwx.example.com]
+  issuerRef: { name: letsencrypt-prod, kind: ClusterIssuer }

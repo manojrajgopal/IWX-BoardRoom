@@ -1,0 +1,207 @@
+# ---------------------------------------------------------------------------
+# IWX Boardroom — stateful infrastructure
+# SQL Server, MongoDB, Redis, RabbitMQ, Kafka (KRaft), Ollama
+# Each gets its own StatefulSet + headless Service + PVC.
+# Sized for a dev/staging cluster. Production should switch to operators
+# (Strimzi, Percona, Bitnami) and external managed services.
+# ---------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: sqlserver, namespace: iwx }
+spec:
+  serviceName: sqlserver
+  replicas: 1
+  selector: { matchLabels: { app: sqlserver } }
+  template:
+    metadata: { labels: { app: sqlserver } }
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports: [{ containerPort: 1433 }]
+          env:
+            - { name: ACCEPT_EULA, value: "Y" }
+            - { name: MSSQL_PID, value: "Developer" }
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: { secretKeyRef: { name: iwx-shared-secrets, key: SQL_SA_PASSWORD } }
+          volumeMounts: [{ name: data, mountPath: /var/opt/mssql }]
+          resources:
+            requests: { cpu: "500m", memory: 2Gi }
+            limits:   { cpu: "2",    memory: 4Gi }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 20Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: sqlserver, namespace: iwx }
+spec:
+  selector: { app: sqlserver }
+  ports: [{ port: 1433, targetPort: 1433 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: mongo, namespace: iwx }
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector: { matchLabels: { app: mongo } }
+  template:
+    metadata: { labels: { app: mongo } }
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports: [{ containerPort: 27017 }]
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom: { secretKeyRef: { name: iwx-shared-secrets, key: MONGO_USER } }
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: iwx-shared-secrets, key: MONGO_PASS } }
+          volumeMounts: [{ name: data, mountPath: /data/db }]
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 20Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: mongo, namespace: iwx }
+spec:
+  selector: { app: mongo }
+  ports: [{ port: 27017, targetPort: 27017 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: redis, namespace: iwx }
+spec:
+  serviceName: redis
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis } }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["redis-server", "--appendonly", "yes"]
+          ports: [{ containerPort: 6379 }]
+          volumeMounts: [{ name: data, mountPath: /data }]
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis, namespace: iwx }
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379, targetPort: 6379 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: rabbitmq, namespace: iwx }
+spec:
+  serviceName: rabbitmq
+  replicas: 1
+  selector: { matchLabels: { app: rabbitmq } }
+  template:
+    metadata: { labels: { app: rabbitmq } }
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3.13-management
+          ports:
+            - { containerPort: 5672 }
+            - { containerPort: 15672 }
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom: { secretKeyRef: { name: iwx-shared-secrets, key: RABBIT_USER } }
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom: { secretKeyRef: { name: iwx-shared-secrets, key: RABBIT_PASS } }
+          volumeMounts: [{ name: data, mountPath: /var/lib/rabbitmq }]
+          readinessProbe:
+            exec: { command: ["rabbitmq-diagnostics", "-q", "ping"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 10Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: rabbitmq, namespace: iwx }
+spec:
+  selector: { app: rabbitmq }
+  ports:
+    - { name: amqp, port: 5672, targetPort: 5672 }
+    - { name: mgmt, port: 15672, targetPort: 15672 }
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: kafka, namespace: iwx }
+spec:
+  serviceName: kafka
+  replicas: 1
+  selector: { matchLabels: { app: kafka } }
+  template:
+    metadata: { labels: { app: kafka } }
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:3.7
+          ports: [{ containerPort: 9092 }, { containerPort: 9093 }]
+          env:
+            - { name: KAFKA_CFG_NODE_ID, value: "1" }
+            - { name: KAFKA_CFG_PROCESS_ROLES, value: "broker,controller" }
+            - { name: KAFKA_CFG_LISTENERS, value: "PLAINTEXT://:9092,CONTROLLER://:9093" }
+            - { name: KAFKA_CFG_ADVERTISED_LISTENERS, value: "PLAINTEXT://kafka:9092" }
+            - { name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES, value: "CONTROLLER" }
+            - { name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS, value: "1@kafka:9093" }
+            - { name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP, value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT" }
+            - { name: ALLOW_PLAINTEXT_LISTENER, value: "yes" }
+          volumeMounts: [{ name: data, mountPath: /bitnami/kafka }]
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 20Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: kafka, namespace: iwx }
+spec:
+  selector: { app: kafka }
+  ports: [{ port: 9092, targetPort: 9092 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: ollama, namespace: iwx }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ollama } }
+  template:
+    metadata: { labels: { app: ollama } }
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports: [{ containerPort: 11434 }]
+          volumeMounts: [{ name: data, mountPath: /root/.ollama }]
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: ollama, namespace: iwx }
+spec:
+  selector: { app: ollama }
+  ports: [{ port: 11434, targetPort: 11434 }]

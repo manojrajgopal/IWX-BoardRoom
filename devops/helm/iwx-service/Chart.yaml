@@ -1,0 +1,10 @@
+apiVersion: v2
+name: iwx-service
+description: Generic IWX Boardroom service chart — used by all 35 backend services and 4 frontend apps.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords: [iwx, boardroom, microservice]
+maintainers:
+  - name: InfiniteWaveX
+    url: https://infinitewavex.io

@@ -1,0 +1,10 @@
+# Staging overrides
+global:
+  imageTag: staging
+  domain: staging.iwx.example.com
+
+api-gateway:
+  ingress:
+    host: staging.iwx.example.com
+    tls:  { enabled: true, secretName: iwx-tls-staging }
+    mtls: { enabled: false }

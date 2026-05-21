@@ -1,0 +1,56 @@
+apiVersion: v2
+name: iwx-platform
+description: Umbrella chart deploying the entire IWX Boardroom platform — 35 backend services + 4 frontend SPAs via the iwx-service sub-chart.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  # api-gateway
+  - { name: iwx-service, alias: api-gateway,                       version: 0.1.0, repository: "file://../iwx-service", condition: api-gateway.enabled }
+  # ceo + departments (Phase 1+2)
+  - { name: iwx-service, alias: ceo-agent-service,                 version: 0.1.0, repository: "file://../iwx-service", condition: ceo-agent-service.enabled }
+  - { name: iwx-service, alias: hr-agent-service,                  version: 0.1.0, repository: "file://../iwx-service", condition: hr-agent-service.enabled }
+  - { name: iwx-service, alias: sales-agent-service,               version: 0.1.0, repository: "file://../iwx-service", condition: sales-agent-service.enabled }
+  - { name: iwx-service, alias: finance-agent-service,             version: 0.1.0, repository: "file://../iwx-service", condition: finance-agent-service.enabled }
+  - { name: iwx-service, alias: marketing-agent-service,           version: 0.1.0, repository: "file://../iwx-service", condition: marketing-agent-service.enabled }
+  - { name: iwx-service, alias: operations-agent-service,          version: 0.1.0, repository: "file://../iwx-service", condition: operations-agent-service.enabled }
+  - { name: iwx-service, alias: development-agent-service,         version: 0.1.0, repository: "file://../iwx-service", condition: development-agent-service.enabled }
+  - { name: iwx-service, alias: research-agent-service,            version: 0.1.0, repository: "file://../iwx-service", condition: research-agent-service.enabled }
+  - { name: iwx-service, alias: legal-agent-service,               version: 0.1.0, repository: "file://../iwx-service", condition: legal-agent-service.enabled }
+  - { name: iwx-service, alias: social-media-agent-service,        version: 0.1.0, repository: "file://../iwx-service", condition: social-media-agent-service.enabled }
+  - { name: iwx-service, alias: analytics-agent-service,           version: 0.1.0, repository: "file://../iwx-service", condition: analytics-agent-service.enabled }
+  - { name: iwx-service, alias: customer-support-agent-service,    version: 0.1.0, repository: "file://../iwx-service", condition: customer-support-agent-service.enabled }
+  - { name: iwx-service, alias: automation-agent-service,          version: 0.1.0, repository: "file://../iwx-service", condition: automation-agent-service.enabled }
+  - { name: iwx-service, alias: platform-intelligence-agent-service, version: 0.1.0, repository: "file://../iwx-service", condition: platform-intelligence-agent-service.enabled }
+  # ai engines (Phase 3)
+  - { name: iwx-service, alias: orchestrator-ai,    version: 0.1.0, repository: "file://../iwx-service", condition: orchestrator-ai.enabled }
+  - { name: iwx-service, alias: memory-engine,      version: 0.1.0, repository: "file://../iwx-service", condition: memory-engine.enabled }
+  - { name: iwx-service, alias: llm-router,         version: 0.1.0, repository: "file://../iwx-service", condition: llm-router.enabled }
+  - { name: iwx-service, alias: prompt-engine,      version: 0.1.0, repository: "file://../iwx-service", condition: prompt-engine.enabled }
+  - { name: iwx-service, alias: vector-engine,      version: 0.1.0, repository: "file://../iwx-service", condition: vector-engine.enabled }
+  - { name: iwx-service, alias: rag-engine,         version: 0.1.0, repository: "file://../iwx-service", condition: rag-engine.enabled }
+  - { name: iwx-service, alias: reasoning-engine,   version: 0.1.0, repository: "file://../iwx-service", condition: reasoning-engine.enabled }
+  # platform connectors (Phase 4)
+  - { name: iwx-service, alias: instagram-connector, version: 0.1.0, repository: "file://../iwx-service", condition: instagram-connector.enabled }
+  - { name: iwx-service, alias: youtube-connector,   version: 0.1.0, repository: "file://../iwx-service", condition: youtube-connector.enabled }
+  - { name: iwx-service, alias: linkedin-connector,  version: 0.1.0, repository: "file://../iwx-service", condition: linkedin-connector.enabled }
+  - { name: iwx-service, alias: twitter-connector,   version: 0.1.0, repository: "file://../iwx-service", condition: twitter-connector.enabled }
+  - { name: iwx-service, alias: facebook-connector,  version: 0.1.0, repository: "file://../iwx-service", condition: facebook-connector.enabled }
+  - { name: iwx-service, alias: reddit-connector,    version: 0.1.0, repository: "file://../iwx-service", condition: reddit-connector.enabled }
+  - { name: iwx-service, alias: whatsapp-connector,  version: 0.1.0, repository: "file://../iwx-service", condition: whatsapp-connector.enabled }
+  - { name: iwx-service, alias: email-connector,     version: 0.1.0, repository: "file://../iwx-service", condition: email-connector.enabled }
+  - { name: iwx-service, alias: websites-connector,  version: 0.1.0, repository: "file://../iwx-service", condition: websites-connector.enabled }
+  # automation engines (Phase 5)
+  - { name: iwx-service, alias: workflow-engine,  version: 0.1.0, repository: "file://../iwx-service", condition: workflow-engine.enabled }
+  - { name: iwx-service, alias: scheduler-engine, version: 0.1.0, repository: "file://../iwx-service", condition: scheduler-engine.enabled }
+  - { name: iwx-service, alias: task-engine,      version: 0.1.0, repository: "file://../iwx-service", condition: task-engine.enabled }
+  - { name: iwx-service, alias: approval-engine,  version: 0.1.0, repository: "file://../iwx-service", condition: approval-engine.enabled }
+  # security (Phase 6)
+  - { name: iwx-service, alias: java-security-engine, version: 0.1.0, repository: "file://../iwx-service", condition: java-security-engine.enabled }
+  - { name: iwx-service, alias: auth-service,         version: 0.1.0, repository: "file://../iwx-service", condition: auth-service.enabled }
+  - { name: iwx-service, alias: audit-service,        version: 0.1.0, repository: "file://../iwx-service", condition: audit-service.enabled }
+  # frontends (Phase 1 + Phase 7)
+  - { name: iwx-service, alias: angular-dashboard,    version: 0.1.0, repository: "file://../iwx-service", condition: angular-dashboard.enabled }
+  - { name: iwx-service, alias: admin-panel,          version: 0.1.0, repository: "file://../iwx-service", condition: admin-panel.enabled }
+  - { name: iwx-service, alias: realtime-monitor,     version: 0.1.0, repository: "file://../iwx-service", condition: realtime-monitor.enabled }
+  - { name: iwx-service, alias: analytics-dashboard,  version: 0.1.0, repository: "file://../iwx-service", condition: analytics-dashboard.enabled }
